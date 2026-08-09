@@ -27,8 +27,8 @@ import HomeEventsPage from "./components/HomeEventsPage";
 import EventDetailPage from "./components/EventDetailPage";
 import EventPage from "./components/EventPage";
 import { useModal } from "./hooks/useModal";
-import { ToastProvider, useToast } from "./components/ToastContext"; // Import ToastProvider
-import "./styles/locomotive.css";
+import { ToastProvider, useToast } from "./components/ToastContext";
+// import "./styles/locomotive.css";
 import MemberProfile from "./components/MemberProfile";
 
 interface MyJwtPayload {
@@ -43,7 +43,7 @@ interface MyJwtPayload {
 const AppContent: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { showSuccess, showInfo, showError } = useToast(); // Use toast hook
+  const { showSuccess, showInfo, showError } = useToast();
 
   const { isOpen, openModal, closeModal } = useModal();
   const loginModal = useModal();
@@ -51,7 +51,6 @@ const AppContent: React.FC = () => {
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Scroll to top whenever the location changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -73,7 +72,6 @@ const AppContent: React.FC = () => {
         console.error("Invalid or expired token", err);
         localStorage.removeItem("token");
         setUser(null);
-        // Show error toast instead of console log
         showError("Session expired. Please log in again.");
       }
     }
@@ -84,7 +82,6 @@ const AppContent: React.FC = () => {
     localStorage.removeItem("token");
     setUser(null);
     navigate("/");
-    // Show info toast instead of alert
     showInfo("You have been logged out successfully.");
   };
 
@@ -117,8 +114,6 @@ const AppContent: React.FC = () => {
       name: credentials.name,
     });
     loginModal.closeModal();
-
-    // Show success toast
     showSuccess(`Welcome back, ${credentials.name}!`);
 
     if (credentials.role === "admin") {
@@ -142,7 +137,7 @@ const AppContent: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center">
+      <div className="min-h-full w-full font-lexend flex flex-col">
         <div className="text-white text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue mx-auto mb-4"></div>
           <p>Loading...</p>
@@ -152,8 +147,7 @@ const AppContent: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen font-lexend">
-      {/* Home Page */}
+    <div className="min-h-full w-full font-lexend flex flex-col">
       {isHomePage && (
         <div className="bg-dark-bg text-white">
           <Header
@@ -177,10 +171,8 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* About Us Page */}
       {isAboutUsPage && <AboutUs />}
 
-      {/* Events List Page */}
       {isEventsListPage && (
         <div>
           <HomeEventsPage user={user} onLoginClick={loginModal.openModal} />
@@ -194,7 +186,6 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* Event Detail Page (from Home) */}
       {isEventPage && !isDashboardEventPage && (
         <div>
           <EventDetailPage onLoginClick={loginModal.openModal} user={user} />
@@ -208,7 +199,6 @@ const AppContent: React.FC = () => {
         </div>
       )}
 
-      {/* Dashboard */}
       {isDashboardPage && user && (
         <Dashboard
           user={user}
@@ -217,39 +207,31 @@ const AppContent: React.FC = () => {
         />
       )}
 
-      {/* Dashboard Event Page */}
       {isDashboardEventPage && user && (
         <EventPage user={user} onLogout={handleLogout} />
       )}
 
-      {/* Admin */}
       {isAdminPage && user && isAdmin && <AdminPanel onLogout={handleLogout} />}
 
-      {/* Account Details */}
       {location.pathname === "/account" && user && (
         <AccountDetails user={user} onLogout={handleLogout} />
       )}
       {location.pathname === "/account" && !user && <Navigate to="/" replace />}
 
-      {/* Profile */}
       {location.pathname === "/profile" && user && (
         <Profile user={user} onLogout={handleLogout} />
       )}
       {location.pathname === "/profile" && !user && <Navigate to="/" replace />}
 
-      {/* Team Page Layout */}
       {location.pathname === "/team" && <TeamPage />}
 
-      {/* Member Profile Page */}
       {isMemberProfilePage && <MemberProfile />}
 
-      {/* Protected Route Redirects */}
       {isDashboardPage && !user && <Navigate to="/" replace />}
       {isAdminPage && (!user || !isAdmin) && (
         <Navigate to={user ? "/dashboard" : "/"} replace />
       )}
 
-      {/* Global PDF Viewer */}
       <PDFViewer
         isOpen={pdfViewer.isOpen}
         onClose={handleClosePDF}
@@ -264,8 +246,6 @@ const AppContent: React.FC = () => {
 function App() {
   return (
     <ToastProvider>
-      {" "}
-      {/* Wrap the entire app with ToastProvider */}
       <Router>
         <Routes>
           <Route path="/" element={<AppContent />} />
@@ -278,8 +258,9 @@ function App() {
           <Route path="/profile" element={<AppContent />} />
           <Route path="/event/:id" element={<AppContent />} />
           <Route path="/team" element={<AppContent />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
           <Route path="/team/:admissionNo" element={<AppContent />} />
+          {/* Wildcard catch-all route placed strictly at the bottom */}
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </Router>
     </ToastProvider>

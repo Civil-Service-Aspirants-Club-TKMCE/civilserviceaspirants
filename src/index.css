@@ -2,10 +2,29 @@
 @tailwind components;
 @tailwind utilities;
 
-body, html {
-  background-color: #111827; /* Tailwind's gray-900 to match your theme */
-  color: white;
+/* Fix mobile touch scrolling and viewport sizing on direct loads */
+html {
+  height: 100%;
+  overflow-x: hidden;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100%;
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch; /* Crucial for iOS/Android touch momentum scrolling */
+  background-color: #0f172a;
+  color: #ffffff;
+  font-family: 'Lexend', sans-serif;
+  touch-action: pan-y; /* Explicitly allow vertical touch gestures */
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-y: visible !important;
 }

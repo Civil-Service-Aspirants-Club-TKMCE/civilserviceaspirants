@@ -17,9 +17,9 @@ const TeamPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Custom function to determine the rank of a position and its corresponding team members
+  // Custom ranking function matching your exact hierarchical sequence
   const getPositionRank = (position: string): number => {
-    if (!position) return 99; 
+    if (!position) return 999; 
     
     const pos = position.toLowerCase();
 
@@ -27,37 +27,30 @@ const TeamPage: React.FC = () => {
     if (pos.includes("ambassador")) return 1;
     if (pos.includes("student head")) return 2;
 
-    // Tier 2: Core Heads & Their Corresponding Sub-Teams (Sub-teams get ranked immediately after their head)
-    if (pos.includes("pc head") || pos.includes("program coordinator head") || pos === "program coordinator") return 3;
-    if (pos.includes("pc team") || pos.includes("program coordinator team")) return 4;
+    // Tier 2: Core Heads (Exact Sequence: PC -> Finance -> Media/Op -> Editorial -> PR -> Design -> Inquisitive -> Web -> Doc)
+    if (pos.includes("pc head") || pos.includes("program coordinator head") || pos === "program coordinator") return 10;
+    if (pos.includes("finance head")) return 20;
+    if (pos.includes("media and operation") || (pos.includes("operation") && pos.includes("head")) || (pos.includes("media") && pos.includes("head"))) return 30;
+    if (pos.includes("editorial head")) return 40;
+    if (pos.includes("pr head") || pos.includes("public relations head")) return 50;
+    if (pos.includes("design head")) return 60;
+    if (pos.includes("inquisitive") && pos.includes("head")) return 70;
+    if (pos.includes("web head")) return 80;
+    if (pos.includes("doc head") || pos.includes("documentation head") || pos.includes("content & documentation head")) return 90;
 
-    if (pos.includes("finance head")) return 5;
-    if (pos.includes("finance team")) return 6;
+    // Tier 3: Team Members (Following the exact same departmental order)
+    if (pos.includes("pc team") || pos.includes("program coordinator team")) return 110;
+    if (pos.includes("finance team")) return 120;
+    if (pos.includes("media team") || pos.includes("operation team") || pos.includes("operations team")) return 130;
+    if (pos.includes("editorial team")) return 140;
+    if (pos.includes("public relations") || pos.includes("pr team")) return 150;
+    if (pos.includes("design team")) return 160;
+    if (pos.includes("inquisitive")) return 170; // General inquisitive members
+    if (pos.includes("web team")) return 180;
+    if (pos.includes("documentation team") || pos.includes("doc team")) return 190;
 
-    if ((pos.includes("operation") && pos.includes("head")) || (pos.includes("media") && pos.includes("head"))) return 7;
-    if (pos.includes("operation") || pos.includes("media team")) return 8;
-
-    if (pos.includes("editorial head")) return 9;
-    if (pos.includes("editorial team")) return 10;
-
-    // Public Relations is explicitly treated as a normal general team member (rank 99), 
-    // but if you want them grouped under a specific section, you can adjust here.
-    // Here we skip PR head/team special ranking so they fall into 99.
-
-    if (pos.includes("design head")) return 11;
-    if (pos.includes("design team")) return 12;
-
-    if (pos.includes("inquisitive") && pos.includes("head")) return 13;
-    if (pos.includes("inquisitive")) return 14;
-
-    if (pos.includes("web head")) return 15;
-    if (pos.includes("web team")) return 16;
-
-    if (pos.includes("doc head") || pos.includes("documentation head") || pos.includes("content & documentation")) return 17;
-    if (pos.includes("documentation team") || pos.includes("doc team")) return 18;
-
-    // Default for general members (including Public Relations)
-    return 99;
+    // Default fallback for any other roles
+    return 999;
   };
 
   useEffect(() => {
@@ -113,15 +106,18 @@ const TeamPage: React.FC = () => {
     }
   }, [isLoading]);
 
-  // Split the sorted array into visual tiers
+  // Split sorted members into visual groups based on their ranks
   const topLeadership = teamMembers.filter(m => getPositionRank(m.position) <= 2);
-  const coreHeadsAndTeams = teamMembers.filter(m => {
+  const coreHeads = teamMembers.filter(m => {
     const rank = getPositionRank(m.position);
-    return rank >= 3 && rank <= 18;
+    return rank >= 10 && rank <= 90;
   });
-  const generalTeam = teamMembers.filter(m => getPositionRank(m.position) === 99);
+  const teamMembersList = teamMembers.filter(m => {
+    const rank = getPositionRank(m.position);
+    return rank >= 110;
+  });
 
-  // Helper function to render a member profile without the outer square
+  // Helper function to render a member profile card
   const renderMember = (member: TeamMember, sizeClass: string = "w-32 h-32") => (
     <Link
       key={member.admission_number}
@@ -193,17 +189,17 @@ const TeamPage: React.FC = () => {
               </div>
             )}
 
-            {/* Tier 2: Core Heads & Sub-Teams in Order */}
-            {coreHeadsAndTeams.length > 0 && (
+            {/* Tier 2: Core Heads in Exact Sequence */}
+            {coreHeads.length > 0 && (
               <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-                {coreHeadsAndTeams.map(member => renderMember(member, "w-32 h-32 md:w-36 md:h-36"))}
+                {coreHeads.map(member => renderMember(member, "w-32 h-32 md:w-36 md:h-36"))}
               </div>
             )}
 
-            {/* Tier 3: General Team Members (Including Public Relations) */}
-            {generalTeam.length > 0 && (
+            {/* Tier 3: Team Members in Corresponding Department Order */}
+            {teamMembersList.length > 0 && (
               <div className="flex flex-wrap justify-center gap-6 md:gap-10 mt-8">
-                {generalTeam.map(member => renderMember(member, "w-24 h-24 md:w-28 md:h-28"))}
+                {teamMembersList.map(member => renderMember(member, "w-24 h-24 md:w-28 md:h-28"))}
               </div>
             )}
 
