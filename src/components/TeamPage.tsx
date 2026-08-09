@@ -17,24 +17,46 @@ const TeamPage: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  // Custom function to determine the rank of a position
+  // Custom function to determine the rank of a position and its corresponding team members
   const getPositionRank = (position: string): number => {
     if (!position) return 99; 
     
     const pos = position.toLowerCase();
 
+    // Tier 1: Top Leadership
     if (pos.includes("ambassador")) return 1;
     if (pos.includes("student head")) return 2;
-    if (pos.includes("pc head") || pos.includes("program coordinator head") || pos === "program coordinator") return 3;
-    if (pos.includes("finance head")) return 4;
-    if (pos.includes("operation") && pos.includes("head") || pos.includes("media") && pos.includes("head")) return 5;
-    if (pos.includes("editorial head")) return 6;
-    if (pos.includes("pr head") || pos.includes("public relations")) return 7;
-    if (pos.includes("design head")) return 8;
-    if (pos.includes("inquisitive head")) return 9;
-    if (pos.includes("web head")) return 10;
-    if (pos.includes("doc head") || pos.includes("documentation head")) return 11;
 
+    // Tier 2: Core Heads & Their Corresponding Sub-Teams (Sub-teams get ranked immediately after their head)
+    if (pos.includes("pc head") || pos.includes("program coordinator head") || pos === "program coordinator") return 3;
+    if (pos.includes("pc team") || pos.includes("program coordinator team")) return 4;
+
+    if (pos.includes("finance head")) return 5;
+    if (pos.includes("finance team")) return 6;
+
+    if ((pos.includes("operation") && pos.includes("head")) || (pos.includes("media") && pos.includes("head"))) return 7;
+    if (pos.includes("operation") || pos.includes("media team")) return 8;
+
+    if (pos.includes("editorial head")) return 9;
+    if (pos.includes("editorial team")) return 10;
+
+    // Public Relations is explicitly treated as a normal general team member (rank 99), 
+    // but if you want them grouped under a specific section, you can adjust here.
+    // Here we skip PR head/team special ranking so they fall into 99.
+
+    if (pos.includes("design head")) return 11;
+    if (pos.includes("design team")) return 12;
+
+    if (pos.includes("inquisitive") && pos.includes("head")) return 13;
+    if (pos.includes("inquisitive")) return 14;
+
+    if (pos.includes("web head")) return 15;
+    if (pos.includes("web team")) return 16;
+
+    if (pos.includes("doc head") || pos.includes("documentation head") || pos.includes("content & documentation")) return 17;
+    if (pos.includes("documentation team") || pos.includes("doc team")) return 18;
+
+    // Default for general members (including Public Relations)
     return 99;
   };
 
@@ -93,7 +115,10 @@ const TeamPage: React.FC = () => {
 
   // Split the sorted array into visual tiers
   const topLeadership = teamMembers.filter(m => getPositionRank(m.position) <= 2);
-  const coreHeads = teamMembers.filter(m => getPositionRank(m.position) >= 3 && getPositionRank(m.position) <= 11);
+  const coreHeadsAndTeams = teamMembers.filter(m => {
+    const rank = getPositionRank(m.position);
+    return rank >= 3 && rank <= 18;
+  });
   const generalTeam = teamMembers.filter(m => getPositionRank(m.position) === 99);
 
   // Helper function to render a member profile without the outer square
@@ -168,14 +193,14 @@ const TeamPage: React.FC = () => {
               </div>
             )}
 
-            {/* Tier 2: Core Heads */}
-            {coreHeads.length > 0 && (
+            {/* Tier 2: Core Heads & Sub-Teams in Order */}
+            {coreHeadsAndTeams.length > 0 && (
               <div className="flex flex-wrap justify-center gap-6 md:gap-12">
-                {coreHeads.map(member => renderMember(member, "w-32 h-32 md:w-36 md:h-36"))}
+                {coreHeadsAndTeams.map(member => renderMember(member, "w-32 h-32 md:w-36 md:h-36"))}
               </div>
             )}
 
-            {/* Tier 3: General Team Members */}
+            {/* Tier 3: General Team Members (Including Public Relations) */}
             {generalTeam.length > 0 && (
               <div className="flex flex-wrap justify-center gap-6 md:gap-10 mt-8">
                 {generalTeam.map(member => renderMember(member, "w-24 h-24 md:w-28 md:h-28"))}

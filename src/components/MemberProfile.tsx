@@ -79,7 +79,8 @@ const MemberProfile: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white font-lexend relative overflow-hidden flex flex-col">
+    /* Changed overflow-hidden to overflow-y-auto to allow scrolling on direct load/QR scan */
+    <div className="min-h-screen bg-gray-900 text-white font-lexend relative overflow-y-auto flex flex-col">
       {/* Massive Background Glow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[80vw] h-[80vw] max-w-[800px] max-h-[800px] bg-neon-blue/10 blur-[150px] rounded-full pointer-events-none transform-gpu"></div>
 
