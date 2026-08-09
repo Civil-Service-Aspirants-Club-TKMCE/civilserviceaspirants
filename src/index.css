@@ -1,3 +1,11 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+body, html {
+  background-color: #111827; /* Tailwind's gray-900 to match your theme */
+  color: white;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}

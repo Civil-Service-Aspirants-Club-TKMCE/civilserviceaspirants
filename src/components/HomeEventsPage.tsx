@@ -4,7 +4,6 @@ import {
   Calendar,
   Clock,
   MapPin,
-  Users,
   Globe,
   ArrowLeft,
   Search,
@@ -30,7 +29,14 @@ interface EventItem {
   is_active?: boolean; // used to distinguish ongoing/completed
 }
 
-const HomeEventsPage: React.FC = () => {
+// 1. Define the interface for the incoming props from App.tsx
+interface HomeEventsPageProps {
+  user?: any;
+  onLoginClick?: () => void;
+}
+
+// 2. Pass the interface into React.FC and destructure the props
+const HomeEventsPage: React.FC<HomeEventsPageProps> = () => {
   const navigate = useNavigate();
   const [events, setEvents] = useState<EventItem[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);

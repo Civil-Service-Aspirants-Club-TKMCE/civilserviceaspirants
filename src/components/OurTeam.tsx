@@ -1,153 +1,136 @@
-import React, { useEffect, useRef } from "react";
-import { gsap } from "gsap";
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { useNavigate } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../utils/supabaseClient";
 import { Users, ArrowRight } from "lucide-react";
 
-gsap.registerPlugin(ScrollTrigger);
+interface TeamMember {
+  admission_number: string;
+  name: string;
+  position: string;
+  image_url: string;
+}
 
 const OurTeam: React.FC = () => {
-  const sectionRef = useRef<HTMLDivElement>(null);
-  const titleRef = useRef<HTMLHeadingElement>(null);
-  const cardsRef = useRef<HTMLDivElement>(null);
+  const [topMembers, setTopMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const navigate = useNavigate();
 
+  // 1. The exact same ranking logic from the main TeamPage
+  const getPositionRank = (position: string): number => {
+    if (!position) return 99; 
+    
+    const pos = position.toLowerCase();
+
+    if (pos.includes("ambassador")) return 1;
+    if (pos.includes("student head")) return 2;
+    if (pos.includes("pc head") || pos.includes("program coordinator head") || pos === "program coordinator") return 3;
+    if (pos.includes("finance head")) return 4;
+    if (pos.includes("operation") && pos.includes("head") || pos.includes("media") && pos.includes("head")) return 5;
+    if (pos.includes("editorial head")) return 6;
+    if (pos.includes("pr head") || pos.includes("public relations")) return 7;
+    if (pos.includes("design head")) return 8;
+    if (pos.includes("inquisitive head")) return 9;
+    if (pos.includes("web head")) return 10;
+    if (pos.includes("doc head") || pos.includes("documentation head")) return 11;
+
+    return 99;
+  };
+
   useEffect(() => {
-    // Title animation
-    gsap.fromTo(
-      titleRef.current,
-      { y: 50, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 1,
-        ease: "power2.out",
-        scrollTrigger: {
-          trigger: titleRef.current,
-          start: "top 80%",
-          end: "bottom 20%",
-          toggleActions: "play none none reverse",
-        },
-      },
-    );
+    const fetchTopMembers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("committee_members")
+          .select("admission_number, name, position, image_url");
 
-    // Cards animation
-    const cards = cardsRef.current?.children;
-    if (cards) {
-      gsap.fromTo(
-        cards,
-        { y: 80, opacity: 0, scale: 0.8 },
-        {
-          y: 0,
-          opacity: 1,
-          scale: 1,
-          duration: 0.8,
-          stagger: 0.2,
-          ease: "back.out(1.7)",
-          scrollTrigger: {
-            trigger: cardsRef.current,
-            start: "top 80%",
-            end: "bottom 20%",
-            toggleActions: "play none none reverse",
-          },
-        },
-      );
-    }
+        if (error) throw error;
 
-    return () => {
-      ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
+        if (data) {
+          // Sort the entire roster to find the true top leaders
+          const sortedData = data.sort((a, b) => {
+            const rankA = getPositionRank(a.position);
+            const rankB = getPositionRank(b.position);
+
+            if (rankA !== rankB) {
+              return rankA - rankB;
+            }
+            
+            return a.name.localeCompare(b.name);
+          });
+
+          // 2. Slice only the first 3 members for the home page preview
+          setTopMembers(sortedData.slice(0, 3));
+        }
+      } catch (error) {
+        console.error("Error fetching team members:", error);
+      } finally {
+        setIsLoading(false);
+      }
     };
+
+    fetchTopMembers();
   }, []);
 
-  const teamMembers = [
-    {
-      name: "Ashwin M G",
-      position: "Club Ambassador",
-      image: "/Ashwin M G.jpg",
-    },
-    {
-      name: "Brindha R K",
-      position: "Club Ambassador",
-      image: "",
-    },
-    {
-      name: "Rameez",
-      position: "Student Head",
-      image: "",
-    },
-  ];
-
   return (
-    <section
-      id="team"
-      ref={sectionRef}
-      className="py-20 bg-gradient-to-b from-gray-900 to-dark-bg relative overflow-hidden"
-    >
-      {/* Background Pattern */}
-      <div className="absolute inset-0 opacity-5">
-        <div
-          className="absolute inset-0 bg-gradient-to-r from-neon-blue to-neon-purple"
-          style={{
-            backgroundImage:
-              "radial-gradient(circle at 25% 25%, rgba(0,245,255,0.1) 0%, transparent 50%), radial-gradient(circle at 75% 75%, rgba(191,0,255,0.1) 0%, transparent 50%)",
-          }}
-        />
-      </div>
-
-      <div className="container mx-auto px-6 relative z-10">
-        <h2
-          ref={titleRef}
-          className="text-4xl md:text-5xl font-bold text-center mb-16 bg-gradient-to-r from-white to-neon-blue bg-clip-text text-transparent"
-        >
+    <div className="bg-[#0a0f16] py-20 px-6 font-lexend relative">
+      <div className="max-w-6xl mx-auto flex flex-col items-center">
+        
+        <h2 className="text-4xl md:text-5xl font-bold text-neon-blue mb-16 tracking-wide">
           Our Team
         </h2>
 
-        {/* Team Members Grid */}
-        <div
-          ref={cardsRef}
-          className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-3 gap-6 md:gap-8 mb-12"
-        >
-          {teamMembers.map((member, index) => (
-            <div key={index} className="group text-center">
-              <div className="relative mb-4 mx-auto w-24 h-24 md:w-32 md:h-32 lg:w-40 lg:h-40">
-                <div className="w-full h-full rounded-full overflow-hidden border-4 border-neon-blue/30 group-hover:border-neon-blue transition-all duration-300 group-hover:shadow-glow">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.style.display = "none";
-                      target.nextElementSibling!.classList.remove("hidden");
-                    }}
-                  />
-                  <div className="hidden w-full h-full bg-gradient-to-br from-neon-blue/30 to-neon-purple/30 rounded-full flex items-center justify-center">
-                    <Users className="w-8 h-8 md:w-12 md:h-12 text-white" />
+        {isLoading ? (
+          <div className="flex justify-center items-center py-10">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-neon-blue"></div>
+          </div>
+        ) : (
+          <div className="flex flex-col md:flex-row justify-center items-center gap-12 md:gap-24 mb-16 w-full">
+            {topMembers.map((member) => (
+              <Link
+                key={member.admission_number}
+                to={`/team/${member.admission_number}`}
+                className="flex flex-col items-center text-center group transform-gpu transition-all duration-300 hover:-translate-y-2"
+              >
+                <div className="w-40 h-40 md:w-48 md:h-48 mb-6 relative">
+                  <div className="w-full h-full rounded-full overflow-hidden border-[3px] border-teal-600/80 group-hover:border-neon-blue group-hover:shadow-[0_0_20px_rgba(0,245,255,0.3)] transition-all duration-300">
+                    <img
+                      src={member.image_url ? `${member.image_url}?v=2` : ""}
+                      alt={member.name}
+                      loading="lazy" 
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        target.nextElementSibling!.classList.remove("hidden");
+                        target.nextElementSibling!.classList.add("flex");
+                      }}
+                    />
+                    <div className="hidden w-full h-full bg-gray-800 items-center justify-center absolute inset-0">
+                      <Users className="w-12 h-12 text-gray-500" />
+                    </div>
                   </div>
                 </div>
-              </div>
-              <h3 className="text-white font-semibold text-sm md:text-base lg:text-lg mb-1 group-hover:text-neon-blue transition-colors duration-300">
-                {member.name}
-              </h3>
-              <p className="text-gray-400 text-xs md:text-sm">
-                {member.position}
-              </p>
-            </div>
-          ))}
-        </div>
+                
+                <h3 className="text-white font-bold text-xl mb-1 group-hover:text-neon-blue transition-colors">
+                  {member.name}
+                </h3>
+                <p className="text-gray-400 text-sm font-medium">
+                  {member.position}
+                </p>
+              </Link>
+            ))}
+          </div>
+        )}
 
-        {/* Our Team Button */}
-        <div className="text-center">
-          <button
-            onClick={() => navigate("/team")}
-            className="px-8 py-4 bg-white text-black font-semibold rounded-full hover:bg-gray-200 hover:scale-105 transition-all duration-300 inline-flex items-center justify-center space-x-3 mx-auto lg:mx-0"
-          >
-            <span>Meet Our Team</span>
-            <ArrowRight className="w-5 h-5" />
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/team")}
+          className="flex items-center gap-2 bg-white text-black px-8 py-3 rounded-full font-semibold hover:bg-gray-200 transition-colors duration-300"
+        >
+          Meet Our Team <ArrowRight className="w-5 h-5" />
+        </button>
+
       </div>
-    </section>
+    </div>
   );
 };
 
