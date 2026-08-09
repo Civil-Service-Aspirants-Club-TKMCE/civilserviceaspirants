@@ -17,6 +17,17 @@ const Hero: React.FC<HeroProps> = ({ onSignupClick }) => {
   const particlesRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    // 1. The Safeguard: Stop completely if the HTML elements haven't rendered yet
+    if (
+      !heroRef.current ||
+      !titleRef.current ||
+      !subtitleRef.current ||
+      !buttonRef.current ||
+      !logoRef.current
+    ) {
+      return;
+    }
+
     const tl = gsap.timeline();
 
     // Hero entrance animations
@@ -44,8 +55,8 @@ const Hero: React.FC<HeroProps> = ({ onSignupClick }) => {
         "-=1.2",
       );
 
-    // Floating animation for logo
-    gsap.to(logoRef.current, {
+    // Floating animation for logo (stored in a variable so we can clean it up later)
+    const floatAnim = gsap.to(logoRef.current, {
       y: -20,
       duration: 3,
       ease: "power1.inOut",
@@ -60,20 +71,25 @@ const Hero: React.FC<HeroProps> = ({ onSignupClick }) => {
       end: "bottom top",
       scrub: 1,
       onUpdate: (self) => {
-        const progress = self.progress;
-        gsap.to(heroRef.current, {
-          y: progress * 200,
-          opacity: 1 - progress * 0.5,
-          duration: 0.3,
-        });
+        // 2. The onUpdate Protection: Double-check the element still exists mid-scroll
+        if (heroRef.current) {
+          const progress = self.progress;
+          gsap.to(heroRef.current, {
+            y: progress * 200,
+            opacity: 1 - progress * 0.5,
+            duration: 0.3,
+          });
+        }
       },
     });
 
-    // Particle animation
+    // Particle animation (stored in an array so we can clean them up)
+    const particleAnims: gsap.core.Tween[] = [];
     const particles = particlesRef.current?.children;
+    
     if (particles) {
       Array.from(particles).forEach((particle) => {
-        gsap.to(particle, {
+        const anim = gsap.to(particle, {
           y: -100 - Math.random() * 200,
           x: Math.random() * 100 - 50,
           opacity: 0,
@@ -82,10 +98,15 @@ const Hero: React.FC<HeroProps> = ({ onSignupClick }) => {
           repeat: -1,
           ease: "power1.out",
         });
+        particleAnims.push(anim);
       });
     }
 
+    // 3. The Complete Cleanup: Kill every animation running in this component
     return () => {
+      tl.kill();
+      floatAnim.kill();
+      particleAnims.forEach((anim) => anim.kill());
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
     };
   }, []);
@@ -95,7 +116,7 @@ const Hero: React.FC<HeroProps> = ({ onSignupClick }) => {
       id="hero"
       ref={heroRef}
       className="pt-20 min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-dark-bg via-gray-900 to-dark-bg"
-      style={{ scrollMarginTop: "5rem" }} // optional, improves smooth scroll positioning relative to fixed header
+      style={{ scrollMarginTop: "5rem" }}
     >
       {/* Animated Background Particles */}
       <div

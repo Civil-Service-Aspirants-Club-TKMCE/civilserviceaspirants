@@ -1,249 +1,190 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { ArrowLeft, Users } from "lucide-react";
+import React, { useEffect, useState, useRef } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "../utils/supabaseClient";
 import { gsap } from "gsap";
-import Footer from "./Footer";
+import { Users, ArrowLeft } from "lucide-react";
 
-gsap.registerPlugin();
+interface TeamMember {
+  admission_number: string;
+  name: string;
+  position: string;
+  image_url: string;
+}
 
 const TeamPage: React.FC = () => {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    window.scrollTo(0, 0);
-  }, []);
+  // Custom function to determine the rank of a position
+  const getPositionRank = (position: string): number => {
+    if (!position) return 99; 
+    
+    const pos = position.toLowerCase();
+
+    if (pos.includes("ambassador")) return 1;
+    if (pos.includes("student head")) return 2;
+    if (pos.includes("pc head") || pos.includes("program coordinator head") || pos === "program coordinator") return 3;
+    if (pos.includes("finance head")) return 4;
+    if (pos.includes("operation") && pos.includes("head") || pos.includes("media") && pos.includes("head")) return 5;
+    if (pos.includes("editorial head")) return 6;
+    if (pos.includes("pr head") || pos.includes("public relations")) return 7;
+    if (pos.includes("design head")) return 8;
+    if (pos.includes("inquisitive head")) return 9;
+    if (pos.includes("web head")) return 10;
+    if (pos.includes("doc head") || pos.includes("documentation head")) return 11;
+
+    return 99;
+  };
 
   useEffect(() => {
-    // Animate header entrance
-    gsap.fromTo(
-      ".team-header",
-      { y: -50, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.8,
-        ease: "power3.out",
-      },
-    );
+    const fetchAllMembers = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("committee_members")
+          .select("admission_number, name, position, image_url");
 
-    // Animate cards entrance
-    gsap.fromTo(
-      ".team-member-card",
-      { y: 50, opacity: 0 },
-      {
-        y: 0,
-        opacity: 1,
-        duration: 0.6,
-        stagger: 0.1,
-        delay: 0.3,
-        ease: "power2.out",
-      },
-    );
+        if (error) throw error;
+
+        if (data) {
+          const sortedData = data.sort((a, b) => {
+            const rankA = getPositionRank(a.position);
+            const rankB = getPositionRank(b.position);
+
+            if (rankA !== rankB) {
+              return rankA - rankB;
+            }
+            
+            return a.name.localeCompare(b.name);
+          });
+
+          setTeamMembers(sortedData);
+        }
+      } catch (error) {
+        console.error("Error fetching team members:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchAllMembers();
   }, []);
 
-  const allTeamMembers = [
-    {
-      name: "Ashwin M G",
-      position: "Club Ambassador",
-      image: "/Ashwin M G.jpg",
-    },
-    {
-      name: "Brindha R K",
-      position: "Club Ambassador",
-      image: "",
-    },
-    {
-      name: "Rameez",
-      position: "Club Ambassador",
-      image: "",
-    },
-    {
-      name: "Nafih Koya",
-      position: "Program Coordinator Head",
-      image: "/NAFIH KOYA VM.jpg",
-    },
-    {
-      name: "Safanath",
-      position: "Program Coordinator",
-      image: "/SAFANATH.jpg",
-    },
-    {
-      name: "Vaishnavi",
-      position: "Program Coordinator",
-      image: "/G S Vaishnavi .jpg",
-    },
-    {
-      name: "Amin",
-      position: "Program Coordinator",
-      image: "",
-    },
-    {
-      name: "Sinan",
-      position: "Design Head",
-      image: "/MUHAMMED SINAN TP .jpg",
-    },
-    {
-      name: "Aswani",
-      position: "Design Team",
-      image: "/Aswani.jpg",
-    },
-    {
-      name: "Shehina",
-      position: "Design Team",
-      image: "/Shehina.jpg",
-    },
-    {
-      name: "Abel Joseph",
-      position: "Content and Doc Head",
-      image: "/Abel.jpg",
-    },
-    {
-      name: "Niveditha",
-      position: "Content and Doc Team",
-      image: "/Niveditha S Nair.jpg",
-    },
-    {
-      name: "Aliya",
-      position: "Content and Doc Team",
-      image: "/ALIYA. S.jpg",
-    },
-    {
-      name: "Krishnendu",
-      position: "Content and Doc Team",
-      image: "/KRISHNENDU.jpg",
-    },
-    {
-      name: "Bibin",
-      position: "Public Relations Head",
-      image: "/Bibin.jpg",
-    },
-    {
-      name: "Abhay ",
-      position: "Public Relations Vice Head",
-      image: "/ABHAY.jpg",
-    },
-    {
-      name: "Siva Prasad",
-      position: "Public Relations",
-      image: "/sivaprasad.jpg",
-    },
-    {
-      name: "Anagha Anilkumar",
-      position: "Public Relations",
-      image: "/anagha.jpg",
-    },
-    {
-      name: "Rani Shaibhya",
-      position: "Public Relations",
-      image: "/RANI SHAIBHYA.jpg",
-    },
-    {
-      name: "Yaseen",
-      position: "Inquisitive Head",
-      image: "/YASEEN.jpg",
-    },
-    {
-      name: "Krishnapriya",
-      position: "Inquisitive Team",
-      image: "/KRISHNAPRIYA KK.jpg",
-    },
-    {
-      name: "Hridhya",
-      position: "Inquisitive Team",
-      image: "/Hridhya S B.jpg",
-    },
-    {
-      name: "Adithyan",
-      position: "Tech Head",
-      image: "/Adithyan.jpg",
-    },
-    {
-      name: "Danish",
-      position: "Tech Team",
-      image: "/Danish.jpg",
-    },
-    {
-      name: "Ananda Lakshmi",
-      position: "Finance Head",
-      image: "",
-    },
-    {
-      name: "Afnan",
-      position: "Finance Team",
-      image: "",
-    },
-  ];
+  // GSAP Animation targets all elements with the 'member-card' class
+  useEffect(() => {
+    if (!isLoading && containerRef.current) {
+      const cards = containerRef.current.querySelectorAll('.member-card');
+      if (cards.length > 0) {
+        gsap.fromTo(
+          cards,
+          { y: 30, opacity: 0 },
+          {
+            y: 0,
+            opacity: 1,
+            duration: 0.5,
+            stagger: 0.05,
+            ease: "power3.out",
+          }
+        );
+      }
+    }
+  }, [isLoading]);
+
+  // Split the sorted array into visual tiers
+  const topLeadership = teamMembers.filter(m => getPositionRank(m.position) <= 2);
+  const coreHeads = teamMembers.filter(m => getPositionRank(m.position) >= 3 && getPositionRank(m.position) <= 11);
+  const generalTeam = teamMembers.filter(m => getPositionRank(m.position) === 99);
+
+  // Helper function to render a member profile without the outer square
+  const renderMember = (member: TeamMember, sizeClass: string = "w-32 h-32") => (
+    <Link
+      key={member.admission_number}
+      to={`/team/${member.admission_number}`}
+      className="member-card flex flex-col items-center text-center group transform-gpu transition-all duration-500 hover:-translate-y-2 p-4"
+    >
+      <div className={`relative mb-5 ${sizeClass}`}>
+        <div className="w-full h-full rounded-full overflow-hidden border-2 border-white/10 group-hover:border-neon-blue group-hover:shadow-[0_0_25px_rgba(0,245,255,0.3)] transition-all duration-500">
+          <img
+            src={member.image_url || ""}
+            alt={member.name}
+            loading="lazy" 
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700"
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.style.display = "none";
+              target.nextElementSibling!.classList.remove("hidden");
+              target.nextElementSibling!.classList.add("flex");
+            }}
+          />
+          <div className="hidden w-full h-full bg-gray-800 items-center justify-center absolute inset-0">
+            <Users className="w-10 h-10 text-gray-500" />
+          </div>
+        </div>
+      </div>
+      
+      <h3 className="text-white font-semibold text-lg mb-1 group-hover:text-neon-blue transition-colors duration-300">
+        {member.name}
+      </h3>
+      <p className="text-neon-purple/80 text-sm font-medium tracking-wide">
+        {member.position}
+      </p>
+    </Link>
+  );
 
   return (
-    <div className="bg-[#0f172a] min-h-screen flex flex-col">
-      {/* Header */}
-      <div className="team-header glass-panel border-b border-white/10 relative">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8 py-6 relative flex items-center justify-center">
-          {/* Back Button */}
+    <div className="min-h-screen bg-gray-900 pt-28 pb-32 px-6 font-lexend relative overflow-x-hidden">
+      
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-neon-blue/10 blur-[150px] rounded-full pointer-events-none transform-gpu" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="text-center mb-20 relative">
           <button
             onClick={() => navigate("/")}
-            className="flex items-center justify-center w-10 h-10 bg-glass-bg backdrop-blur-sm border border-white/20 rounded-full hover:border-neon-blue/50 hover:shadow-glow transition-all duration-300 group absolute left-6"
+            className="absolute left-0 top-1/2 -translate-y-1/2 p-3 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full transition-colors hidden md:block"
           >
-            <ArrowLeft className="w-5 h-5 text-white group-hover:text-neon-blue transition-colors" />
+            <ArrowLeft className="w-5 h-5 text-gray-300" />
           </button>
-
-          {/* Centered Title */}
-          <h1 className="text-3xl font-extrabold text-white text-center">
+          
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
             Our Team
           </h1>
+          <p className="text-gray-400 max-w-2xl mx-auto text-lg">
+            Meet the Execom Committee
+          </p>
         </div>
-      </div>
 
-      {/* Team Members */}
-      <div className="flex-grow">
-        <div className="container mx-auto px-4 sm:px-6 md:px-8 py-12">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-6">
-              Meet the Execom Committee
-            </h2>
-            <p className="text-gray-400">
-              Our dedicated team working together to empower future civil
-              servants and build a strong community at TKMCE.
-            </p>
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-neon-blue"></div>
           </div>
-
-          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {allTeamMembers.map((member, index) => (
-              <div
-                key={index}
-                className="team-member-card glass-panel border border-white/10 rounded-3xl p-6 text-center overflow-hidden transition-shadow duration-300 hover:shadow-lg"
-              >
-                <div className="relative mx-auto w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-white/10 transition-colors duration-300 hover:border-neon-blue">
-                  <img
-                    src={member.image}
-                    alt={member.name}
-                    className="object-cover w-full h-full rounded-full transition-transform duration-500 hover:scale-110"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      target.style.display = "none";
-                      const fallback = target.nextElementSibling;
-                      if (fallback) fallback.classList.remove("hidden");
-                    }}
-                    loading="lazy"
-                  />
-                  <div className="hidden absolute inset-0 rounded-full flex items-center justify-center bg-gradient-to-br from-blue-600/20 to-purple-700/30">
-                    <Users className="text-white" size={48} />
-                  </div>
-                </div>
-
-                <h3 className="mt-5 text-xl font-semibold text-white hover:text-neon-blue truncate">
-                  {member.name}
-                </h3>
-                <p className="mt-1 text-sm text-gray-400 truncate">
-                  {member.position}
-                </p>
+        ) : (
+          <div ref={containerRef} className="flex flex-col gap-16">
+            
+            {/* Tier 1: Top Leadership */}
+            {topLeadership.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-8 md:gap-16">
+                {topLeadership.map(member => renderMember(member, "w-40 h-40 md:w-48 md:h-48"))}
               </div>
-            ))}
-          </div>
-        </div>
-      </div>
+            )}
 
-      <Footer />
+            {/* Tier 2: Core Heads */}
+            {coreHeads.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-6 md:gap-12">
+                {coreHeads.map(member => renderMember(member, "w-32 h-32 md:w-36 md:h-36"))}
+              </div>
+            )}
+
+            {/* Tier 3: General Team Members */}
+            {generalTeam.length > 0 && (
+              <div className="flex flex-wrap justify-center gap-6 md:gap-10 mt-8">
+                {generalTeam.map(member => renderMember(member, "w-24 h-24 md:w-28 md:h-28"))}
+              </div>
+            )}
+
+          </div>
+        )}
+      </div>
     </div>
   );
 };

@@ -13,7 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { api } from "../utils/api";
-import { useToast } from "./ToastContext"; // Import toast hook
+import { useToast } from "./ToastContext"; 
 import axios from "axios";
 
 interface SignupModalProps {
@@ -25,7 +25,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
   const modalRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
 
-  const { showError, showSuccess } = useToast(); // Use toast hook
+  const { showError, showSuccess } = useToast(); 
 
   const [formData, setFormData] = useState({
     fullName: "",
@@ -52,30 +52,29 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
     isValid: false,
   });
 
-  // Store original overflow styles
   const originalBodyOverflow = useRef<string>("");
   const originalHtmlOverflow = useRef<string>("");
 
   useEffect(() => {
-    if (isOpen) {
-      // Store original overflow styles
-      originalBodyOverflow.current = document.body.style.overflow || "";
-      originalHtmlOverflow.current =
-        document.documentElement.style.overflow || "";
+    // 1. Lock the current HTML elements into safe local variables
+    const modal = modalRef.current;
+    const content = contentRef.current;
 
-      // Disable scrolling
+    // 2. If they don't exist yet, stop completely so GSAP doesn't crash
+    if (!modal || !content) return;
+
+    if (isOpen) {
+      originalBodyOverflow.current = document.body.style.overflow || "";
+      originalHtmlOverflow.current = document.documentElement.style.overflow || "";
+
       document.body.style.overflow = "hidden";
       document.documentElement.style.overflow = "hidden";
 
-      // Animate modal in
-      gsap.set(modalRef.current, { display: "flex" });
+      // 3. Use the locked variables (modal and content) instead of refs
+      gsap.set(modal, { display: "flex" });
+      gsap.fromTo(modal, { opacity: 0 }, { opacity: 1, duration: 0.3 });
       gsap.fromTo(
-        modalRef.current,
-        { opacity: 0 },
-        { opacity: 1, duration: 0.3 },
-      );
-      gsap.fromTo(
-        contentRef.current,
+        content,
         { scale: 0.9, y: 40, opacity: 0 },
         {
           scale: 1,
@@ -87,65 +86,55 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
         },
       );
     } else {
-      // Animate modal out
-      gsap.to(contentRef.current, {
+      // Exit animations using locked variables
+      gsap.to(content, {
         scale: 0.9,
         y: 40,
         opacity: 0,
         duration: 0.3,
         ease: "power3.in",
       });
-      gsap.to(modalRef.current, {
+      gsap.to(modal, {
         opacity: 0,
         duration: 0.5,
         onComplete: () => {
-          gsap.set(modalRef.current, { display: "none" });
-          // Restore original overflow styles
-          document.body.style.overflow = originalBodyOverflow.current;
-          document.documentElement.style.overflow =
-            originalHtmlOverflow.current;
+          // 4. Double check the ref still exists before hiding it
+          if (modalRef.current) {
+            gsap.set(modalRef.current, { display: "none" });
+          }
+          document.body.style.overflow = originalBodyOverflow.current || "unset";
+          document.documentElement.style.overflow = originalHtmlOverflow.current || "unset";
         },
       });
     }
 
-    // Cleanup function to ensure scrolling is restored
     return () => {
       if (!isOpen) {
         document.body.style.overflow = originalBodyOverflow.current || "unset";
-        document.documentElement.style.overflow =
-          originalHtmlOverflow.current || "unset";
+        document.documentElement.style.overflow = originalHtmlOverflow.current || "unset";
       }
     };
   }, [isOpen]);
 
-  // Enhanced close function to ensure scroll is restored
   const handleClose = () => {
     document.body.style.overflow = originalBodyOverflow.current || "unset";
-    document.documentElement.style.overflow =
-      originalHtmlOverflow.current || "unset";
-
+    document.documentElement.style.overflow = originalHtmlOverflow.current || "unset";
     onClose();
   };
 
-  // Email validation function
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     return emailRegex.test(email);
   };
 
-  // Phone number validation function
   const validatePhone = (phone: string): boolean => {
-    // Remove any non-digit characters
     const cleanPhone = phone.replace(/\D/g, "");
     return cleanPhone.length === 10;
   };
 
-  // Password validation function
   const validatePassword = (password: string) => {
     const minLength = password.length >= 6;
-    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(
-      password,
-    );
+    const hasSpecialChar = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
 
     const validation = {
       length: minLength,
@@ -158,19 +147,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
   };
 
   const handleInputChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
 
-    // Special handling for phone number
     if (name === "phone") {
-      // Allow only digits and limit to 10 characters
       const cleanValue = value.replace(/\D/g, "").slice(0, 10);
       setFormData((prev) => ({ ...prev, [name]: cleanValue }));
 
-      // Update phone error in real-time
       if (cleanValue.length === 0) {
         setPhoneError("");
       } else if (cleanValue.length !== 10) {
@@ -179,10 +163,8 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
         setPhoneError("");
       }
     } else if (name === "email") {
-      // Special handling for email validation
       setFormData((prev) => ({ ...prev, [name]: value }));
 
-      // Update email error in real-time
       if (value.length === 0) {
         setEmailError("");
       } else if (!validateEmail(value)) {
@@ -191,7 +173,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
         setEmailError("");
       }
     } else if (name === "pass") {
-      // Special handling for password validation
       setFormData((prev) => ({ ...prev, [name]: value }));
       validatePassword(value);
     } else {
@@ -213,18 +194,14 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Validate email
     if (!validateEmail(formData.email)) {
       showError("Please enter a valid email address.");
       setIsSubmitting(false);
       return;
     }
 
-    // Validate password
     if (!passwordValidation.isValid) {
-      showError(
-        "Password must be at least 6 characters and contain at least one special character.",
-      );
+      showError("Password must be at least 6 characters and contain at least one special character.");
       setIsSubmitting(false);
       return;
     }
@@ -235,7 +212,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
       return;
     }
 
-    // Validate phone number
     if (!validatePhone(formData.phone)) {
       showError("Please enter a valid 10-digit phone number.");
       setIsSubmitting(false);
@@ -271,14 +247,9 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
         confpass: "",
       });
 
-      // Clear validation states
       setPhoneError("");
       setEmailError("");
-      setPasswordValidation({
-        length: false,
-        specialChar: false,
-        isValid: false,
-      });
+      setPasswordValidation({ length: false, specialChar: false, isValid: false });
 
       showSuccess("🎉 Registration successful!, Please login .");
 
@@ -304,7 +275,6 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
-  // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === "Escape" && isOpen) {
@@ -321,7 +291,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
     };
   }, [isOpen]);
 
-  if (!isOpen) return null;
+  // 2. REMOVED: The `if (!isOpen) return null;` line used to be right here!
 
   return (
     <div
@@ -346,9 +316,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
             <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-white/10 flex items-center justify-center">
               <GraduationCap className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-3xl font-bold text-white mb-1">
-              Join Our Club
-            </h2>
+            <h2 className="text-3xl font-bold text-white mb-1">Join Our Club</h2>
             <p className="text-sm text-gray-300">
               Start your journey to civil service excellence
             </p>
@@ -398,9 +366,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                 <p className="mt-2 text-sm text-red-400">{emailError}</p>
               )}
               {formData.email && !emailError && (
-                <p className="mt-2 text-sm text-green-400">
-                  ✓ Valid email address
-                </p>
+                <p className="mt-2 text-sm text-green-400">✓ Valid email address</p>
               )}
             </div>
 
@@ -437,9 +403,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                   <div className="flex items-center space-x-2">
                     <div
                       className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                        passwordValidation.length
-                          ? "bg-green-500"
-                          : "bg-red-500"
+                        passwordValidation.length ? "bg-green-500" : "bg-red-500"
                       }`}
                     >
                       {passwordValidation.length && (
@@ -448,9 +412,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                     </div>
                     <span
                       className={`text-sm ${
-                        passwordValidation.length
-                          ? "text-green-400"
-                          : "text-red-400"
+                        passwordValidation.length ? "text-green-400" : "text-red-400"
                       }`}
                     >
                       At least 6 characters
@@ -459,9 +421,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                   <div className="flex items-center space-x-2">
                     <div
                       className={`w-4 h-4 rounded-full flex items-center justify-center ${
-                        passwordValidation.specialChar
-                          ? "bg-green-500"
-                          : "bg-red-500"
+                        passwordValidation.specialChar ? "bg-green-500" : "bg-red-500"
                       }`}
                     >
                       {passwordValidation.specialChar && (
@@ -475,8 +435,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                           : "text-red-400"
                       }`}
                     >
-                      At least one special character (!@#$%^&*()_+-=[]{}
-                      ;':"\\|,.&lt;&gt;/?)
+                      At least one special character (!@#$%^&*()_+-=[]{};':"\|,.&lt;&gt;/?)
                     </span>
                   </div>
                 </div>
@@ -514,9 +473,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                 )}
               </div>
               {formData.confpass && formData.pass !== formData.confpass && (
-                <p className="mt-2 text-sm text-red-400">
-                  Passwords do not match
-                </p>
+                <p className="mt-2 text-sm text-red-400">Passwords do not match</p>
               )}
               {formData.confpass && formData.pass === formData.confpass && (
                 <p className="mt-2 text-sm text-green-400">✓ Passwords match</p>
@@ -546,9 +503,7 @@ const SignupModal: React.FC<SignupModalProps> = ({ isOpen, onClose }) => {
                 <p className="mt-2 text-sm text-red-400">{phoneError}</p>
               )}
               {formData.phone && !phoneError && (
-                <p className="mt-2 text-sm text-green-400">
-                  ✓ Valid phone number
-                </p>
+                <p className="mt-2 text-sm text-green-400">✓ Valid phone number</p>
               )}
             </div>
 

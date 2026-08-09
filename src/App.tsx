@@ -29,6 +29,7 @@ import EventPage from "./components/EventPage";
 import { useModal } from "./hooks/useModal";
 import { ToastProvider, useToast } from "./components/ToastContext"; // Import ToastProvider
 import "./styles/locomotive.css";
+import MemberProfile from "./components/MemberProfile";
 
 interface MyJwtPayload {
   id: number;
@@ -103,6 +104,7 @@ const AppContent: React.FC = () => {
   const isDashboardEventPage =
     location.pathname.startsWith("/dashboard/event/");
   const isAboutUsPage = location.pathname === "/aboutus";
+  const isMemberProfilePage = location.pathname.startsWith("/team/");
 
   const handleLogin = (credentials: {
     email: string;
@@ -238,6 +240,9 @@ const AppContent: React.FC = () => {
       {/* Team Page Layout */}
       {location.pathname === "/team" && <TeamPage />}
 
+      {/* Member Profile Page */}
+      {isMemberProfilePage && <MemberProfile />}
+
       {/* Protected Route Redirects */}
       {isDashboardPage && !user && <Navigate to="/" replace />}
       {isAdminPage && (!user || !isAdmin) && (
@@ -274,6 +279,7 @@ function App() {
           <Route path="/event/:id" element={<AppContent />} />
           <Route path="/team" element={<AppContent />} />
           <Route path="*" element={<Navigate to="/" replace />} />
+          <Route path="/team/:admissionNo" element={<AppContent />} />
         </Routes>
       </Router>
     </ToastProvider>
