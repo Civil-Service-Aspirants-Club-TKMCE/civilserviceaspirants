@@ -34,7 +34,7 @@ const TeamPage: React.FC = () => {
     if (pos.includes("editorial head")) return 40;
     if (pos.includes("pr head") || pos.includes("public relations head")) return 50;
     if (pos.includes("design head")) return 60;
-    if (pos.includes("inquisitive") && pos.includes("head")) return 70;
+    if (pos.includes("inquizitive") && pos.includes("head")) return 70;
     if (pos.includes("web head")) return 80;
     if (pos.includes("doc head") || pos.includes("documentation head") || pos.includes("content & documentation head")) return 90;
 
@@ -45,7 +45,7 @@ const TeamPage: React.FC = () => {
     if (pos.includes("editorial team")) return 140;
     if (pos.includes("public relations") || pos.includes("pr team")) return 150;
     if (pos.includes("design team")) return 160;
-    if (pos.includes("inquisitive")) return 170; // General inquisitive members
+    if (pos.includes("inquizitive")) return 170; 
     if (pos.includes("web team")) return 180;
     if (pos.includes("documentation team") || pos.includes("doc team")) return 190;
 
